@@ -8,6 +8,7 @@ import re
 
 class WebSocketClient(QThread):
     message_received = pyqtSignal(str)
+    alert_signal = pyqtSignal(str)
 
     def __init__(self, client_id, host = "localhost", port = 8080):
         super().__init__()
@@ -39,6 +40,7 @@ class WebSocketClient(QThread):
                 self.ws.run_forever(sslopt = {"cert_reqs": ssl.CERT_NONE})
             except Exception as error:
                 print(f"Error in WebSocket connection: {error}")
+                self.alert_signal.emit(f"WebSocket connection error: {error}")
 
             if self.running:
                 print(f"Reconnecting in {self.reconnect_delay} seconds...")
@@ -82,9 +84,11 @@ class WebSocketClient(QThread):
 
     def on_error(self, ws, error):
         print(f"WebSocket error: {error}")
+        self.alert_signal.emit(f"WebSocket error: {error}")
 
     def on_close(self, ws, close_status_code, close_msg):
         print(f"WebSocket closed with code: {close_status_code}, message: {close_msg}")
+        self.alert_signal.emit(f"WebSocket closed with code: {close_status_code}, message: {close_msg}")
 
     def send_message(self, current_usage):
         if self.ws and self.ws.sock and self.ws.sock.connected:

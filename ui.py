@@ -93,6 +93,7 @@ class SmartMeter(QMainWindow):
         # Initialize WebSocket client.
         self.websocket_client = WebSocketClient(client_id = self.client_id)
         self.websocket_client.message_received.connect(self.on_message)
+        self.websocket_client.alert_signal.connect(self.show_alert)
         self.websocket_client.connect()
 
         # Initial refresh to load data on startup.
@@ -111,46 +112,49 @@ class SmartMeter(QMainWindow):
         usage, total_usage, bill = get_electricity_data()
         self.websocket_client.send_message(usage)
 
+    def show_alert(self, message):
+        # Show a popup notification.
+        alert = QMessageBox(self)
+        alert.setWindowTitle("Server Alert")
+        alert.setText(message)
+        alert.setIcon(QMessageBox.Warning)
+        
+        alert.setStyleSheet("""
+            QMessageBox {
+                background-color: #ffffff;
+                color: #2c3e50;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QLabel {
+                color: #2c3e50;
+            }
+            QPushButton {
+                background-color: #3498db;
+                color: #ffffff;
+                font-size: 12px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        
+        alert.exec_()
+
     def on_message(self, message):
         message = json.loads(message)
 
         if "clientId" in message:
             # Update current usage, current cost, and total bill labels.
             self.current_usage_value.setText(f"{message['currentUsage']:.2f}")
-            self.current_cost_value.setText(f"{message['cost']:.2f}")
-            self.total_bill_value.setText(f"0.00")
+            self.current_cost_value.setText(f"{message['currentCost']:.2f}")
+            self.total_bill_value.setText(f"{message['totalBill']:.2f}")
 
             # Update status label.
             self.status_label.setText(f"Last Update: {datetime.utcfromtimestamp(message['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} | Client ID: {self.client_id}")
         elif "message" in message:
-            # Show a popup notification.
-            alert = QMessageBox(self)
-            alert.setWindowTitle("Server Alert")
-            alert.setText(message['message'])
-            alert.setIcon(QMessageBox.Warning)
-            
-            alert.setStyleSheet("""
-                QMessageBox {
-                    background-color: #ffffff;
-                    color: #2c3e50;
-                    font-size: 14px;
-                    font-weight: bold;
-                }
-                QLabel {
-                    color: #2c3e50;
-                }
-                QPushButton {
-                    background-color: #3498db;
-                    color: #ffffff;
-                    font-size: 12px;
-                    padding: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #2980b9;
-                }
-            """)
-            
-            alert.exec_()
+            self.show_alert(message["message"])
 
     def closeEvent(self, event):
         self.websocket_client.disconnect()
