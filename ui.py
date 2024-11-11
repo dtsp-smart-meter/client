@@ -88,11 +88,11 @@ class SmartMeter(QMainWindow):
         # Start updating the data every 15 seconds.
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_data)
-        self.update_timer.start(15000)
+        self.update_timer.start(5000)
 
         # Initialize WebSocket client.
         self.websocket_client = WebSocketClient(client_id = self.client_id)
-        self.websocket_client.message_received.connect(self.update_labels)
+        self.websocket_client.message_received.connect(self.on_message)
         self.websocket_client.connect()
 
         # Initial refresh to load data on startup.
@@ -111,16 +111,19 @@ class SmartMeter(QMainWindow):
         usage, total_usage, bill = get_electricity_data()
         self.websocket_client.send_message(usage)
 
-    def update_labels(self, message):
+    def on_message(self, message):
         message = json.loads(message)
 
-        # Update current usage, current cost, and total bill labels.
-        self.current_usage_value.setText(f"{message['currentUsage']:.2f}")
-        self.current_cost_value.setText(f"{message['cost']:.2f}")
-        self.total_bill_value.setText(f"0.00")
+        if "clientId" in message:
+            # Update current usage, current cost, and total bill labels.
+            self.current_usage_value.setText(f"{message['currentUsage']:.2f}")
+            self.current_cost_value.setText(f"{message['cost']:.2f}")
+            self.total_bill_value.setText(f"0.00")
 
-        # Update status label.
-        self.status_label.setText(f"Last Update: {datetime.utcfromtimestamp(message['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} | Client ID: {self.client_id}")
+            # Update status label.
+            self.status_label.setText(f"Last Update: {datetime.utcfromtimestamp(message['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} | Client ID: {self.client_id}")
+        elif "message" in message:
+            print(f"Received alert from server: {message['message']}")
 
     def closeEvent(self, event):
         self.websocket_client.disconnect()

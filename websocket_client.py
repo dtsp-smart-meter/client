@@ -54,30 +54,29 @@ class WebSocketClient(QThread):
         )
         ws.send(connect_frame)
         subscribe_frame = (
-            f"SUBSCRIBE\nid:sub-0\ndestination:/readingResult/{self.client_id}\n\n\0"
+            f"SUBSCRIBE\nid:sub-0\ndestination:/notification/readingResult/{self.client_id}\n\n\0"
         )
         ws.send(subscribe_frame)
-        print(f"Subscribed to /readingResult/{self.client_id}")
+        print(f"Subscribed to /notification/readingResult/{self.client_id}")
+        subscribe_frame = (
+            f"SUBSCRIBE\nid:sub-1\ndestination:/notification/alert\n\n\0"
+        )
+        ws.send(subscribe_frame)
+        print(f"Subscribed to /notification/alert")
 
-    def on_message(self, ws, message):        
+    def on_message(self, ws, message):
         # Extract the JSON part from the message.
         match = re.search(r'\{.*\}', message) # Find the first JSON-like structure.
         if match:
-            json_str = match.group(0)
+            json_message = match.group(0)
             
             try:
-                # Parse the outer JSON to access the 'message' field.
-                outer_data = json.loads(json_str)
-                raw_message = outer_data.get("message", "")
+                data = json.loads(json_message)
+                data = json.dumps(data)
                 
-                # Now parse the nested JSON within 'message' field.
-                nested_data = json.loads(raw_message)
-                nested_data = json.dumps(nested_data)
-                
-                # Convert the dict back to JSON string to emit.
-                self.message_received.emit(nested_data)
+                self.message_received.emit(data)
 
-                print(f"Received message: {nested_data}")
+                print(f"Received message: {data}")
             except json.JSONDecodeError as e:
                 print(f"JSON decoding error: {e}")
 
