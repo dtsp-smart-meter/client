@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QWidget, QFrame
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QWidget, QFrame, QMessageBox
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.Qt import QSizePolicy
 from datetime import datetime
@@ -123,7 +123,34 @@ class SmartMeter(QMainWindow):
             # Update status label.
             self.status_label.setText(f"Last Update: {datetime.utcfromtimestamp(message['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} | Client ID: {self.client_id}")
         elif "message" in message:
-            print(f"Received alert from server: {message['message']}")
+            # Show a popup notification.
+            alert = QMessageBox(self)
+            alert.setWindowTitle("Server Alert")
+            alert.setText(message['message'])
+            alert.setIcon(QMessageBox.Warning)
+            
+            alert.setStyleSheet("""
+                QMessageBox {
+                    background-color: #ffffff;
+                    color: #2c3e50;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                QLabel {
+                    color: #2c3e50;
+                }
+                QPushButton {
+                    background-color: #3498db;
+                    color: #ffffff;
+                    font-size: 12px;
+                    padding: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+            """)
+            
+            alert.exec_()
 
     def closeEvent(self, event):
         self.websocket_client.disconnect()
