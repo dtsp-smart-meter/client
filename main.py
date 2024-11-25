@@ -1,7 +1,7 @@
-import sys
-import logging
 from PyQt5.QtWidgets import QApplication
 from ui import SmartMeter
+import logging
+import sys
 
 if __name__ == "__main__":
     # Configure logging

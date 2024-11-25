@@ -14,6 +14,7 @@ class WebSocketClient(QThread):
     """
     
     # Define PyQt signals to communicate with the main UI thread
+    connected_signal = pyqtSignal()
     message_signal = pyqtSignal(str)
     alert_signal = pyqtSignal(str)
 
@@ -44,7 +45,11 @@ class WebSocketClient(QThread):
                     on_error = self.on_error,
                     on_close = self.on_close
                 )
-                self.websocket.run_forever(sslopt = {"cert_reqs": ssl.CERT_NONE})
+                self.websocket.run_forever(sslopt = {
+                    "ca_certs": Config.CA_CERT_PATH,
+                    "cert_reqs": ssl.CERT_REQUIRED,
+                    "ssl_version": ssl.PROTOCOL_TLSv1_2
+                })
             except Exception as error:
                 logging.error(f"Error in WebSocket connection: {error}")
 
@@ -60,9 +65,11 @@ class WebSocketClient(QThread):
         websocket.send(self._create_connect_frame())
         
         # Sends suscription frames to required channels
-        channels = ["/notification/alert", f"/notification/readingResult/{Config.CLIENT_ID}"]
+        channels = ["/notification/alert", f"/notification/alert/{Config.CLIENT_ID}", f"/notification/readingResult/{Config.CLIENT_ID}"]
         for id, channel in enumerate(channels):
             websocket.send(self._create_subscribe_frame(f"sub-{id}", channel))
+        
+        self.connected_signal.emit()
 
     def on_message(self, websocket, message):
         """
@@ -101,7 +108,6 @@ class WebSocketClient(QThread):
             try:
                 # Prepare the message payload with client ID, usage, and timestamp
                 message = {
-                    "clientId": Config.CLIENT_ID,
                     "currentUsage": current_usage,
                     "timestamp": datetime.now().timestamp()
                 }
@@ -135,7 +141,14 @@ class WebSocketClient(QThread):
         Creates a send frame with a specific destination and message.
         """
         message = json.dumps(message)
-        return f"SEND\ndestination:{destination}\n\n{message}\n\0"
+        #return f"SEND\ndestination:{destination}\n\n{message}\n\0"
+        return (
+            f"SEND\n"
+            f"destination:{destination}\n"
+            f"clientId:{Config.CLIENT_ID}\n"
+            f"authToken:{Config.AUTHENTICATION_TOKEN}\n"
+            f"\n{message}\n\0"
+        )
 
     def _extract_json_from_message(self, message):
         """

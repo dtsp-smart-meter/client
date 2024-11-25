@@ -5,6 +5,7 @@ from datetime import datetime
 from websocket_client import WebSocketClient
 from data_provider import get_current_usage
 from config import Config
+import random
 import json
 
 class SmartMeter(QMainWindow):
@@ -84,14 +85,15 @@ class SmartMeter(QMainWindow):
 
         # Initialize WebSocket client
         self.websocket_client = WebSocketClient()
+        self.websocket_client.connected_signal.connect(self.update_data)
         self.websocket_client.message_signal.connect(self.on_message)
         self.websocket_client.alert_signal.connect(self.show_alert)
         self.websocket_client.connect()
 
-        # Start updating the data every 15 seconds
+        # Start updating the data between every 15 and 60 seconds
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_data)
-        self.update_timer.start(5000)
+        self.update_timer.start(random.randint(15, 60) * 1000)
 
     def set_label_styles(self):
         for label in [self.current_usage_prefix, self.current_cost_prefix, self.total_bill_prefix]:
@@ -138,6 +140,7 @@ class SmartMeter(QMainWindow):
     def on_message(self, message):
         message = json.loads(message)
 
+        # Message is a meter reading
         if all(key in message for key in ["currentUsage", "currentCost", "totalBill"]):
             # Update current usage, current cost, and total bill labels
             self.current_usage_value.setText(f"{message['currentUsage']:.2f}")
@@ -146,6 +149,7 @@ class SmartMeter(QMainWindow):
 
             # Update status label
             self.status_label.setText(f"Last Update: {datetime.utcfromtimestamp(message['timestamp']).strftime('%Y-%m-%d %H:%M:%S')} | Client ID: {Config.CLIENT_ID}")
+        # Message is an alert
         elif "message" in message:
             # Display an alert popup notification
             self.show_alert(message["message"])
