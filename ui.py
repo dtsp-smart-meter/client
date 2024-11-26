@@ -56,7 +56,7 @@ class SmartMeter(QMainWindow):
         self.update_timer.start(self.update_interval_seconds * 1000)
 
     def _create_labels(self):
-        """Creates labels for current usage, cost, total bill, last update, and client ID."""
+        """Creates labels for Current Usage, Current Cost, Total Bill, Client ID, Last Update, and Update Interval."""
 
         self.current_usage_prefix = QLabel("Current Usage (kWh): ")
         self.current_usage_value = QLabel("0.00")
@@ -64,8 +64,8 @@ class SmartMeter(QMainWindow):
         self.current_cost_value = QLabel("0.00")
         self.total_bill_prefix = QLabel("Total Bill (£): ")
         self.total_bill_value = QLabel("0.00")
-        self.last_update_label = QLabel(f"<b>Last Update:</b> <span style='color: #7f8c8d;'>Never</span>")
         self.client_id_label = QLabel(f"<b>Client ID:</b> <span style='color: #7f8c8d;'>{Config.CLIENT_ID}</span>")
+        self.last_update_label = QLabel(f"<b>Last Update:</b> <span style='color: #7f8c8d;'>Never</span>")
         self.update_interval_label = QLabel(f"<b>Update Interval:</b> <span style='color: #7f8c8d;'>{self.update_interval_seconds} seconds</span>")
 
     def _add_data_labels_to_layouts(self):
@@ -100,7 +100,7 @@ class SmartMeter(QMainWindow):
         return wrapper
 
     def _create_status_section(self):
-        """Creates the status section for client ID, last update, and update interval."""
+        """Creates the status section for Client ID, Last Update, and Update Interval."""
 
         self.status_widget = QWidget(self)
         self.status_layout = QVBoxLayout(self.status_widget)
