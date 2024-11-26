@@ -1,3 +1,3 @@
 # SmartMeter Client
 
-Python PyQT client for the Smart Meter.
+Python PyQT5 client for the Smart Meter.
