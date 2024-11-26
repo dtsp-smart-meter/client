@@ -20,8 +20,8 @@ class SmartMeter(QMainWindow):
 
         # Initialize the main window.
         self.setWindowTitle("Smart Meter")
-        self.setGeometry(100, 100, 600, 400)
-        self.setFixedSize(600, 400)
+        self.setGeometry(100, 100, 500, 300)
+        self.setFixedSize(500, 300)
         self.setStyleSheet("background-color: #ecf0f1;")
 
         self.central_widget = QWidget(self)
@@ -182,6 +182,6 @@ class SmartMeter(QMainWindow):
 
     def closeEvent(self, event):
         """Handles the window close event and disconnects the WebSocket client."""
-        
+
         self.websocket_client.disconnect()
         super().closeEvent(event)
